@@ -17,12 +17,15 @@ export default withAuth(
     // Role-based access control
     if (token?.role) {
       for (const [route, allowedRoles] of Object.entries(routeAccessMap)) {
-        const routePattern = new RegExp(route.replace(/\.\*/g, ".*"));
+        const routePattern = new RegExp(`^${route}$`);
         
         if (routePattern.test(pathname)) {
           if (!allowedRoles.includes(token.role as string)) {
+            console.log(`Access denied for ${token.role} to ${pathname}`);
             return NextResponse.redirect(new URL(`/${token.role}`, req.url));
           }
+          console.log(`Access granted for ${token.role} to ${pathname}`);
+          break; // Match topildi, boshqa tekshirishga hojat yo'q
         }
       }
     }

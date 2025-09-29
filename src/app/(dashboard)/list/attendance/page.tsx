@@ -7,6 +7,7 @@ import { ITEM_PER_PAGE } from "@/lib/settings";
 import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import AttendanceManagement from "@/components/AttendanceManagement";
 
 type AttendanceList = {
   id: number;
@@ -32,6 +33,15 @@ const AttendanceListPage = async ({
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
   const currentUserId = session?.user?.id;
+
+  // Agar teacher bo'lsa, maxsus interfeys ko'rsatamiz
+  if (role === 'teacher') {
+    return (
+      <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+        <AttendanceManagement teacherId={currentUserId} />
+      </div>
+    );
+  }
 
   const columns = [
     {
