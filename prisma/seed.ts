@@ -1,77 +1,120 @@
-import { Day, PrismaClient, UserSex } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
 const prisma = new PrismaClient();
 
 async function main() {
-  // ADMIN
-  await prisma.admin.create({
-    data: {
-      id: "admin1",
-      username: "admin1",
-    },
-  });
-  await prisma.admin.create({
-    data: {
-      id: "admin2",
-      username: "admin2",
-    },
-  });
+  console.log("🌱 Database seeding started...");
 
-  // GRADE
-  for (let i = 1; i <= 6; i++) {
-    await prisma.grade.create({
-      data: {
-        level: i,
+  // Admin parollarini yangilash
+  const hashedPassword = await bcrypt.hash("admin123", 10);
+  
+  try {
+    await prisma.admin.upsert({
+      where: { username: "admin1" },
+      create: {
+        username: "admin1",
+        password: hashedPassword,
+      },
+      update: {
+        password: hashedPassword,
       },
     });
+
+    await prisma.admin.upsert({
+      where: { username: "admin2" },
+      create: {
+        username: "admin2",
+        password: hashedPassword,
+      },
+      update: {
+        password: hashedPassword,
+      },
+    });
+
+    console.log("✅ Admin users updated successfully!");
+  } catch (error) {
+    console.log("❌ Error updating admin users:", error);
+  }
+
+  // GRADE
+  try {
+    for (let i = 1; i <= 6; i++) {
+      await prisma.grade.create({
+        data: {
+          level: i,
+        },
+      });
+    }
+    console.log("Grades created successfully!");
+  } catch (error) {
+    console.log("Grades may already exist, skipping...")
   }
 
   // CLASS
-  for (let i = 1; i <= 6; i++) {
-    await prisma.class.create({
-      data: {
-        name: `${i}A`, 
-        gradeId: i, 
-        capacity: Math.floor(Math.random() * (20 - 15 + 1)) + 15,
-      },
-    });
+  try {
+    for (let i = 1; i <= 6; i++) {
+      await prisma.class.create({
+        data: {
+          name: `${i}A`, 
+          gradeId: i, 
+          capacity: Math.floor(Math.random() * (20 - 15 + 1)) + 15,
+        },
+      });
+    }
+    console.log("Classes created successfully!");
+  } catch (error) {
+    console.log("Classes may already exist, skipping...")
   }
 
   // SUBJECT
-  const subjectData = [
-    { name: "Mathematics" },
-    { name: "Science" },
-    { name: "English" },
-    { name: "History" },
-    { name: "Geography" },
-    { name: "Physics" },
-    { name: "Chemistry" },
-    { name: "Biology" },
-    { name: "Computer Science" },
-    { name: "Art" },
-  ];
+  try {
+    const subjectData = [
+      { name: "Mathematics" },
+      { name: "Science" },
+      { name: "English" },
+      { name: "History" },
+      { name: "Geography" },
+      { name: "Physics" },
+      { name: "Chemistry" },
+      { name: "Biology" },
+      { name: "Computer Science" },
+      { name: "Art" },
+    ];
 
-  for (const subject of subjectData) {
-    await prisma.subject.create({ data: subject });
+    for (const subject of subjectData) {
+      await prisma.subject.create({ data: subject });
+    }
+    console.log("Subjects created successfully!");
+  } catch (error) {
+    console.log("Subjects may already exist, skipping...")
   }
 
   // TEACHER
-  for (let i = 1; i <= 15; i++) {
-    await prisma.teacher.create({
-      data: {
-        id: `teacher${i}`, // Unique ID for the teacher
-        username: `teacher${i}`,
-        name: `TName${i}`,
-        surname: `TSurname${i}`,
-        email: `teacher${i}@example.com`,
-        phone: `123-456-789${i}`,
-        address: `Address${i}`,
-        bloodType: "A+",
-        sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
-        subjects: { connect: [{ id: (i % 10) + 1 }] }, 
-        classes: { connect: [{ id: (i % 6) + 1 }] }, 
-        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
-      },
-    });
+  try {
+    const teacherPassword = await bcrypt.hash("teacher123", 10);
+    for (let i = 1; i <= 15; i++) {
+      await prisma.teacher.create({
+        data: {
+          id: `teacher${i}`, // Unique ID for the teacher
+          username: `teacher${i}`,
+          password: teacherPassword,
+          name: `TName${i}`,
+          surname: `TSurname${i}`,
+          email: `teacher${i}@example.com`,
+          phone: `123-456-789${i}`,
+          address: `Address${i}`,
+          bloodType: "A+",
+          sex: i % 2 === 0 ? "MALE" : "FEMALE",
+          subjects: { connect: [{ id: (i % 10) + 1 }] }, 
+          classes: { connect: [{ id: (i % 6) + 1 }] }, 
+          birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
+        },
+      });
+    }
+    console.log("Teachers created successfully!");
+  } catch (error) {
+    console.log("Teachers may already exist, skipping...")
   }
 
   // LESSON
@@ -79,11 +122,7 @@ async function main() {
     await prisma.lesson.create({
       data: {
         name: `Lesson${i}`, 
-        day: Day[
-          Object.keys(Day)[
-            Math.floor(Math.random() * Object.keys(Day).length)
-          ] as keyof typeof Day
-        ], 
+        day: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"][Math.floor(Math.random() * 5)] as any, 
         startTime: new Date(new Date().setHours(new Date().getHours() + 1)), 
         endTime: new Date(new Date().setHours(new Date().getHours() + 3)), 
         subjectId: (i % 10) + 1, 
@@ -94,33 +133,42 @@ async function main() {
   }
 
   // PARENT
-  for (let i = 1; i <= 25; i++) {
-    await prisma.parent.create({
-      data: {
-        id: `parentId${i}`,
-        username: `parentId${i}`,
-        name: `PName ${i}`,
-        surname: `PSurname ${i}`,
-        email: `parent${i}@example.com`,
-        phone: `123-456-789${i}`,
-        address: `Address${i}`,
-      },
-    });
+  try {
+    const parentPassword = await bcrypt.hash("parent123", 10);
+    for (let i = 1; i <= 25; i++) {
+      await prisma.parent.create({
+        data: {
+          id: `parentId${i}`,
+          username: `parentId${i}`,
+          password: parentPassword,
+          name: `PName ${i}`,
+          surname: `PSurname ${i}`,
+          email: `parent${i}@example.com`,
+          phone: `123-456-789${i}`,
+          address: `Address${i}`,
+        },
+      });
+    }
+    console.log("Parents created successfully!");
+  } catch (error) {
+    console.log("Parents may already exist, skipping...")
   }
 
   // STUDENT
+  const studentPassword = await bcrypt.hash("student123", 10);
   for (let i = 1; i <= 50; i++) {
     await prisma.student.create({
       data: {
         id: `student${i}`, 
         username: `student${i}`, 
+        password: studentPassword,
         name: `SName${i}`,
         surname: `SSurname ${i}`,
         email: `student${i}@example.com`,
         phone: `987-654-321${i}`,
         address: `Address${i}`,
         bloodType: "O-",
-        sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
+        sex: i % 2 === 0 ? "MALE" : "FEMALE",
         parentId: `parentId${Math.ceil(i / 2) % 25 || 25}`, 
         gradeId: (i % 6) + 1, 
         classId: (i % 6) + 1, 

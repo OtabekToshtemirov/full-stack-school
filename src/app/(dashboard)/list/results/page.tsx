@@ -7,7 +7,8 @@ import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
 
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 type ResultList = {
   id: number;
@@ -28,9 +29,9 @@ const ResultListPage = async ({
   searchParams: { [key: string]: string | undefined };
 }) => {
 
-const { userId, sessionClaims } = auth();
-const role = (sessionClaims?.metadata as { role?: string })?.role;
-const currentUserId = userId;
+const session = await getServerSession(authOptions);
+const role = session?.user?.role;
+const currentUserId = session?.user?.id;
 
 
 const columns = [
@@ -106,7 +107,7 @@ const renderRow = (item: ResultList) => (
 
   // URL PARAMS CONDITION
 
-  const query: Prisma.ResultWhereInput = {};
+  const query: any = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

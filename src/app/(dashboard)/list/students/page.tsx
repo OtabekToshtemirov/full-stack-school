@@ -2,24 +2,32 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { Class, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-import { auth } from "@clerk/nextjs/server";
-
-type StudentList = Student & { class: Class };
+type StudentList = {
+  id: string;
+  username: string;
+  name: string;
+  surname: string;
+  email?: string;
+  phone?: string;
+  address: string;
+  img?: string;
+  class: { name: string };
+};
 
 const StudentListPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const { sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
 
   const columns = [
     {
@@ -102,7 +110,7 @@ const StudentListPage = async ({
 
   // URL PARAMS CONDITION
 
-  const query: Prisma.StudentWhereInput = {};
+  const query: any = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

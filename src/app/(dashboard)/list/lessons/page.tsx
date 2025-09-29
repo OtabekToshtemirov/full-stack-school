@@ -4,12 +4,19 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-type LessonList = Lesson & { subject: Subject } & { class: Class } & {
-  teacher: Teacher;
+type LessonList = {
+  id: number;
+  name: string;
+  day: string;
+  startTime: Date;
+  endTime: Date;
+  subject: { name: string };
+  class: { name: string };
+  teacher: { name: string; surname: string };
 };
 
 
@@ -19,8 +26,8 @@ const LessonListPage = async ({
   searchParams: { [key: string]: string | undefined };
 }) => {
 
-const { sessionClaims } = auth();
-const role = (sessionClaims?.metadata as { role?: string })?.role;
+const session = await getServerSession(authOptions);
+const role = session?.user?.role;
 
 
 const columns = [
@@ -76,7 +83,7 @@ const renderRow = (item: LessonList) => (
 
   // URL PARAMS CONDITION
 
-  const query: Prisma.LessonWhereInput = {};
+  const query: any = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

@@ -4,19 +4,23 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-type SubjectList = Subject & { teachers: Teacher[] };
+type SubjectList = {
+  id: number;
+  name: string;
+  teachers: { name: string }[];
+};
 
 const SubjectListPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const { sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
 
   const columns = [
     {
@@ -62,7 +66,7 @@ const SubjectListPage = async ({
 
   // URL PARAMS CONDITION
 
-  const query: Prisma.SubjectWhereInput = {};
+  const query: any = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

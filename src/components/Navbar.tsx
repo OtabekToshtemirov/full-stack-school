@@ -1,9 +1,11 @@
-import { UserButton } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import Image from "next/image";
+import LogoutButton from "./LogoutButton";
 
 const Navbar = async () => {
-  const user = await currentUser();
+  const session = await getServerSession(authOptions);
+  
   return (
     <div className="flex items-center justify-between p-4">
       {/* SEARCH BAR */}
@@ -27,13 +29,15 @@ const Navbar = async () => {
           </div>
         </div>
         <div className="flex flex-col">
-          <span className="text-xs leading-3 font-medium">John Doe</span>
+          <span className="text-xs leading-3 font-medium">{session?.user?.name}</span>
           <span className="text-[10px] text-gray-500 text-right">
-            {user?.publicMetadata?.role as string}
+            {session?.user?.role}
           </span>
         </div>
-        {/* <Image src="/avatar.png" alt="" width={36} height={36} className="rounded-full"/> */}
-        <UserButton />
+        <div className="flex items-center gap-2">
+          <Image src="/avatar.png" alt="" width={36} height={36} className="rounded-full"/>
+          <LogoutButton />
+        </div>
       </div>
     </div>
   );

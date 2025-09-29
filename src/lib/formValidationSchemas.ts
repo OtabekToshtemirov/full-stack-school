@@ -87,3 +87,13 @@ export const examSchema = z.object({
 });
 
 export type ExamSchema = z.infer<typeof examSchema>;
+
+export const attendanceSchema = z.object({
+  id: z.coerce.number().optional(),
+  date: z.string().min(1, { message: "Date is required!" }),
+  present: z.boolean(),
+  studentId: z.string().min(1, { message: "Student is required!" }),
+  lessonId: z.coerce.number().min(1, { message: "Lesson is required!" }),
+});
+
+export type AttendanceSchema = z.infer<typeof attendanceSchema>;

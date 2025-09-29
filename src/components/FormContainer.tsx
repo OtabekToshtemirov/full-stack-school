@@ -1,6 +1,7 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
-import { auth } from "@clerk/nextjs/server";
 
 export type FormContainerProps = {
   table:
@@ -24,9 +25,9 @@ export type FormContainerProps = {
 const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
   let relatedData = {};
 
-  const { userId, sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
-  const currentUserId = userId;
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
+  const currentUserId = session?.user?.id;
 
   if (type !== "delete") {
     switch (table) {
@@ -68,6 +69,42 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
           select: { id: true, name: true },
         });
         relatedData = { lessons: examLessons };
+        break;
+      case "attendance":
+        const attendanceLessons = await prisma.lesson.findMany({
+          where: {
+            ...(role === "teacher" ? { teacherId: currentUserId! } : {}),
+          },
+          select: { 
+            id: true, 
+            name: true,
+            subject: { select: { name: true } },
+            class: { select: { name: true } }
+          },
+        });
+        
+        const attendanceStudents = await prisma.student.findMany({
+          where: {
+            ...(role === "teacher" ? { 
+              class: { 
+                lessons: { 
+                  some: { teacherId: currentUserId! } 
+                } 
+              } 
+            } : {}),
+          },
+          select: { 
+            id: true, 
+            name: true, 
+            surname: true,
+            class: { select: { name: true } }
+          },
+        });
+        
+        relatedData = { 
+          lessons: attendanceLessons, 
+          students: attendanceStudents 
+        };
         break;
 
       default:

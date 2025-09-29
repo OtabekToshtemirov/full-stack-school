@@ -4,12 +4,20 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { Parent, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-import { auth } from "@clerk/nextjs/server";
-
-type ParentList = Parent & { students: Student[] };
+type ParentList = {
+  id: string;
+  username: string;
+  name: string;
+  surname: string;
+  email?: string;
+  phone: string;
+  address: string;
+  students: { name: string; surname: string }[];
+};
 
 const ParentListPage = async ({
   searchParams,
@@ -17,8 +25,8 @@ const ParentListPage = async ({
   searchParams: { [key: string]: string | undefined };
 }) => {
 
-const { sessionClaims } = auth();
-const role = (sessionClaims?.metadata as { role?: string })?.role;
+const session = await getServerSession(authOptions);
+const role = session?.user?.role;
 
 
 const columns = [
@@ -86,7 +94,7 @@ const renderRow = (item: ParentList) => (
 
   // URL PARAMS CONDITION
 
-  const query: Prisma.ParentWhereInput = {};
+  const query: any = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

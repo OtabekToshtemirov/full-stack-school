@@ -8,13 +8,15 @@ datasource db {
 }
 
 model Admin {
-  id       String @id
+  id       String @id @default(uuid())
   username String @unique
+  password String @default("$2a$10$defaultpasswordhash123456")
 }
 
 model Student {
-  id          String       @id
+  id          String       @id @default(uuid())
   username    String       @unique
+  password    String @default("$2a$10$defaultpasswordhash123456")
   name        String
   surname     String
   email       String?      @unique
@@ -36,8 +38,9 @@ model Student {
 }
 
 model Teacher {
-  id        String    @id
+  id        String    @id @default(uuid())
   username  String    @unique
+  password  String    @default("$2a$10$defaultpasswordhash123456")
   name      String
   surname   String
   email     String?   @unique
@@ -54,8 +57,9 @@ model Teacher {
 }
 
 model Parent {
-  id        String    @id
+  id        String    @id @default(uuid())
   username  String    @unique
+  password  String    @default("$2a$10$defaultpasswordhash123456")
   name      String
   surname   String
   email     String?   @unique

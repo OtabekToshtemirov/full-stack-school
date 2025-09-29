@@ -3,21 +3,32 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-type TeacherList = Teacher & { subjects: Subject[] } & { classes: Class[] };
+type TeacherList = {
+  id: string;
+  username: string;
+  name: string;
+  surname: string;
+  email: string;
+  phone: string;
+  address: string;
+  img?: string;
+  subjects: { name: string }[];
+  classes: { name: string }[];
+};
 
 const TeacherListPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const { sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
   const columns = [
     {
       header: "Info",
@@ -108,7 +119,7 @@ const TeacherListPage = async ({
 
   // URL PARAMS CONDITION
 
-  const query: Prisma.TeacherWhereInput = {};
+  const query: any = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

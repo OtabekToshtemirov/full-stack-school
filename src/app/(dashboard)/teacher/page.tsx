@@ -1,9 +1,11 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-const TeacherPage = () => {
-  const { userId } = auth();
+const TeacherPage = async () => {
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
   return (
     <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
       {/* LEFT */}

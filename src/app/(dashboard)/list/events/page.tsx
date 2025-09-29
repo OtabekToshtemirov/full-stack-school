@@ -4,11 +4,18 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { Class, Event, Prisma } from "@prisma/client";
 import Image from "next/image";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-type EventList = Event & { class: Class };
+type EventList = {
+  id: number;
+  title: string;
+  description: string;
+  startTime: Date;
+  endTime: Date;
+  class: { name: string } | null;
+};
 
 const EventListPage = async ({
   searchParams,
@@ -16,9 +23,9 @@ const EventListPage = async ({
   searchParams: { [key: string]: string | undefined };
 }) => {
 
-  const { userId, sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
-  const currentUserId = userId;
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
+  const currentUserId = session?.user?.id;
 
   const columns = [
     {
@@ -97,7 +104,7 @@ const EventListPage = async ({
 
   // URL PARAMS CONDITION
 
-  const query: Prisma.EventWhereInput = {};
+  const query: any = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

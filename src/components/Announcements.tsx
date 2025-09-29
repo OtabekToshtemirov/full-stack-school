@@ -1,9 +1,11 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 
 const Announcements = async () => {
-  const { userId, sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+  const role = session?.user?.role;
 
   const roleConditions = {
     teacher: { lessons: { some: { teacherId: userId! } } },

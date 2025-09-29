@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  deleteAttendance,
   deleteClass,
   deleteExam,
   deleteStudent,
@@ -21,12 +22,12 @@ const deleteActionMap = {
   teacher: deleteTeacher,
   student: deleteStudent,
   exam: deleteExam,
+  attendance: deleteAttendance,
 // TODO: OTHER DELETE ACTIONS
   parent: deleteSubject,
   lesson: deleteSubject,
   assignment: deleteSubject,
   result: deleteSubject,
-  attendance: deleteSubject,
   event: deleteSubject,
   announcement: deleteSubject,
 };
@@ -51,7 +52,24 @@ const ClassForm = dynamic(() => import("./forms/ClassForm"), {
 const ExamForm = dynamic(() => import("./forms/ExamForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const AttendanceForm = dynamic(() => import("./forms/AttendanceForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 // TODO: OTHER FORMS
+
+// Default form komponenti mavjud bo'lmagan table'lar uchun
+const DefaultForm = ({ setOpen, type, table }: { setOpen: Dispatch<SetStateAction<boolean>>, type: string, table: string }) => (
+  <div className="p-4 flex flex-col gap-4">
+    <h2 className="text-lg font-semibold">{table} Form</h2>
+    <p className="text-gray-500">Bu form hali yaratilmagan.</p>
+    <button 
+      onClick={() => setOpen(false)}
+      className="bg-blue-500 text-white py-2 px-4 rounded-md"
+    >
+      Yopish
+    </button>
+  </div>
+);
 
 const forms: {
   [key: string]: (
@@ -100,8 +118,22 @@ const forms: {
       setOpen={setOpen}
       relatedData={relatedData}
     />
-    // TODO OTHER LIST ITEMS
   ),
+  attendance: (setOpen, type, data, relatedData) => (
+    <AttendanceForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+  // Mavjud bo'lmagan formalar uchun default form
+  parent: (setOpen, type) => <DefaultForm setOpen={setOpen} type={type} table="parent" />,
+  lesson: (setOpen, type) => <DefaultForm setOpen={setOpen} type={type} table="lesson" />,
+  assignment: (setOpen, type) => <DefaultForm setOpen={setOpen} type={type} table="assignment" />,
+  result: (setOpen, type) => <DefaultForm setOpen={setOpen} type={type} table="result" />,
+  event: (setOpen, type) => <DefaultForm setOpen={setOpen} type={type} table="event" />,
+  announcement: (setOpen, type) => <DefaultForm setOpen={setOpen} type={type} table="announcement" />,
 };
 
 const FormModal = ({
@@ -148,7 +180,7 @@ const FormModal = ({
         </button>
       </form>
     ) : type === "create" || type === "update" ? (
-      forms[table](setOpen, type, data, relatedData)
+      forms[table] ? forms[table](setOpen, type, data, relatedData) : <DefaultForm setOpen={setOpen} type={type} table={table} />
     ) : (
       "Form not found!"
     );
