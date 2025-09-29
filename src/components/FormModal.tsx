@@ -1,36 +1,16 @@
 "use client";
 
-import {
-  deleteAttendance,
-  deleteClass,
-  deleteExam,
-  deleteStudent,
-  deleteSubject,
-  deleteTeacher,
-} from "@/lib/actions";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useFormState } from "react-dom";
+import { Dispatch, SetStateAction, useState } from "react";
 import { toast } from "react-toastify";
-import { FormContainerProps } from "./FormContainer";
+import { FormContainerProps } from "./FormContainerClient";
+import { useDeleteTeacher } from "@/hooks/useTeachers";
+import { useDeleteStudent } from "@/hooks/useStudents";
+import { useDeleteClass } from "@/hooks/useClasses";
+import { useDeleteSubject } from "@/hooks/useSubjects";
 
-const deleteActionMap = {
-  subject: deleteSubject,
-  class: deleteClass,
-  teacher: deleteTeacher,
-  student: deleteStudent,
-  exam: deleteExam,
-  attendance: deleteAttendance,
-// TODO: OTHER DELETE ACTIONS
-  parent: deleteSubject,
-  lesson: deleteSubject,
-  assignment: deleteSubject,
-  result: deleteSubject,
-  event: deleteSubject,
-  announcement: deleteSubject,
-};
+// Delete hooklar komponent ichida ishlatiladi
 
 // USE LAZY LOADING
 
@@ -154,35 +134,63 @@ const FormModal = ({
   const [open, setOpen] = useState(false);
 
   const Form = () => {
-    const [state, formAction] = useFormState(deleteActionMap[table], {
-      success: false,
-      error: false,
-    });
+    // Delete mutation hooklar
+    const deleteTeacherMutation = useDeleteTeacher();
+    const deleteStudentMutation = useDeleteStudent();
+    const deleteClassMutation = useDeleteClass();
+    const deleteSubjectMutation = useDeleteSubject();
 
-    const router = useRouter();
+    const handleDelete = async () => {
+      if (!id) return;
 
-    useEffect(() => {
-      if (state.success) {
-        toast(`${table} has been deleted!`);
+      try {
+        switch (table) {
+          case "teacher":
+            await deleteTeacherMutation.mutateAsync(id.toString());
+            break;
+          case "student":
+            await deleteStudentMutation.mutateAsync(id.toString());
+            break;
+          case "class":
+            await deleteClassMutation.mutateAsync(id.toString());
+            break;
+          case "subject":
+            await deleteSubjectMutation.mutateAsync(id.toString());
+            break;
+          default:
+            throw new Error(`Delete not implemented for ${table}`);
+        }
+        
+        toast.success(`${table} muvaffaqiyatli o'chirildi!`);
         setOpen(false);
-        router.refresh();
+      } catch (error) {
+        toast.error(`Xatolik: ${table} o'chirishda muammo bo'ldi`);
+        console.error('Delete error:', error);
       }
-    }, [state, router]);
+    };
+
+    const isDeleting = deleteTeacherMutation.isPending || 
+                     deleteStudentMutation.isPending || 
+                     deleteClassMutation.isPending || 
+                     deleteSubjectMutation.isPending;
 
     return type === "delete" && id ? (
-      <form action={formAction} className="p-4 flex flex-col gap-4">
-        <input type="text | number" name="id" value={id} hidden />
+      <div className="p-4 flex flex-col gap-4">
         <span className="text-center font-medium">
-          All data will be lost. Are you sure you want to delete this {table}?
+          Barcha ma'lumotlar yo'qotiladi. Haqiqatan ham bu {table}-ni o'chirmoqchimisiz?
         </span>
-        <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
-          Delete
+        <button 
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isDeleting ? "O'chirilmoqda..." : "O'chirish"}
         </button>
-      </form>
+      </div>
     ) : type === "create" || type === "update" ? (
       forms[table] ? forms[table](setOpen, type, data, relatedData) : <DefaultForm setOpen={setOpen} type={type} table={table} />
     ) : (
-      "Form not found!"
+      "Form topilmadi!"
     );
   };
 

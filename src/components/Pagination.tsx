@@ -1,18 +1,26 @@
 "use client";
 
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { useRouter } from "next/navigation";
 
-const Pagination = ({ page, count }: { page: number; count: number }) => {
-  const router = useRouter();
+interface PaginationProps {
+  page: number;
+  count: number;
+  onPageChange?: (page: number) => void;
+}
 
+const Pagination = ({ page, count, onPageChange }: PaginationProps) => {
   const hasPrev = ITEM_PER_PAGE * (page - 1) > 0;
   const hasNext = ITEM_PER_PAGE * (page - 1) + ITEM_PER_PAGE < count;
 
   const changePage = (newPage: number) => {
-    const params = new URLSearchParams(window.location.search);
-    params.set("page", newPage.toString());
-    router.push(`${window.location.pathname}?${params}`);
+    if (onPageChange) {
+      onPageChange(newPage);
+    } else {
+      // Fallback to URL params for backward compatibility
+      const params = new URLSearchParams(window.location.search);
+      params.set("page", newPage.toString());
+      window.history.pushState({}, '', `${window.location.pathname}?${params}`);
+    }
   };
   return (
     <div className="p-4 flex items-center justify-between text-gray-500">

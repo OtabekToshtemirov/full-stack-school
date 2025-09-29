@@ -1,19 +1,36 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-const TableSearch = () => {
-  const router = useRouter();
+interface TableSearchProps {
+  onSearch?: (value: string) => void;
+}
+
+const TableSearch = ({ onSearch }: TableSearchProps) => {
+  const [searchValue, setSearchValue] = useState("");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const value = (e.currentTarget[0] as HTMLInputElement).value;
+    
+    if (onSearch) {
+      onSearch(value);
+    } else {
+      // Fallback to URL params for backward compatibility
+      const params = new URLSearchParams(window.location.search);
+      params.set("search", value);
+      window.history.pushState({}, '', `${window.location.pathname}?${params}`);
+    }
+  };
 
-    const params = new URLSearchParams(window.location.search);
-    params.set("search", value);
-    router.push(`${window.location.pathname}?${params}`);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    
+    if (onSearch) {
+      onSearch(value);
+    }
   };
 
   return (
@@ -25,6 +42,8 @@ const TableSearch = () => {
       <input
         type="text"
         placeholder="Search..."
+        value={searchValue}
+        onChange={handleInputChange}
         className="w-[200px] p-2 bg-transparent outline-none"
       />
     </form>

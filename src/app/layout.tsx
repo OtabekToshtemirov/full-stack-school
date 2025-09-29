@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import QueryProvider from "@/providers/QueryProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,10 +21,12 @@ export default function RootLayout({
   return (
     <html lang="uz">
       <body className={inter.className}>
-        <Providers>
-          {children}
-          <ToastContainer position="bottom-right" theme="dark" />
-        </Providers>
+        <QueryProvider>
+          <Providers>
+            {children}
+            <ToastContainer position="bottom-right" hideProgressBar />
+          </Providers>
+        </QueryProvider>
       </body>
     </html>
   );
